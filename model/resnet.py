@@ -8,11 +8,15 @@ import torch
 import torch.nn as nn
 
 # 3x3 卷积定义
+
+
 def conv3x3(in_channels, out_channels, stride=1):
-    return nn.Conv2d(in_channels, out_channels, kernel_size=3, 
+    return nn.Conv2d(in_channels, out_channels, kernel_size=3,
                      stride=stride, padding=1, bias=False)
 
 # Resnet 的残差块
+
+
 class ResidualBlock(nn.Module):
     def __init__(self, in_channels, out_channels, stride=1, downsample=None):
         super(ResidualBlock, self).__init__()
@@ -22,7 +26,7 @@ class ResidualBlock(nn.Module):
         self.conv2 = conv3x3(out_channels, out_channels)
         self.bn2 = nn.BatchNorm2d(out_channels)
         self.downsample = downsample
-        
+
     def forward(self, x):
         residual = x
         out = self.conv1(x)
@@ -37,6 +41,8 @@ class ResidualBlock(nn.Module):
         return out
 
 # ResNet定义
+
+
 class ResNet(nn.Module):
     def __init__(self, block, layers, num_classes=10):
         super(ResNet, self).__init__()
@@ -50,7 +56,7 @@ class ResNet(nn.Module):
         self.avg_pool = nn.AvgPool2d(8)
         self.shuffle = ShuffleAndRetrieve(64)
         self.fc = nn.Linear(64, num_classes)
-        
+
     def make_layer(self, block, out_channels, blocks, stride=1):
         downsample = None
         if (stride != 1) or (self.in_channels != out_channels):
@@ -58,12 +64,13 @@ class ResNet(nn.Module):
                 conv3x3(self.in_channels, out_channels, stride=stride),
                 nn.BatchNorm2d(out_channels))
         layers = []
-        layers.append(block(self.in_channels, out_channels, stride, downsample))
+        layers.append(
+            block(self.in_channels, out_channels, stride, downsample))
         self.in_channels = out_channels
         for i in range(1, blocks):
             layers.append(block(out_channels, out_channels))
         return nn.Sequential(*layers)
-    
+
     def forward(self, x):
         out = self.conv(x)
         out = self.bn(out)
@@ -76,13 +83,14 @@ class ResNet(nn.Module):
         out = self.shuffle(out)
         out = self.fc(out)
         return out
-    
+
+
 class ShuffleAndRetrieve(nn.Module):
-    def __init__(self, keep_size:int) -> None:
+    def __init__(self, keep_size: int) -> None:
         super(ShuffleAndRetrieve, self).__init__()
         self.keep_size = keep_size
 
-    def forward(self, input:torch.Tensor):
-        assert(input.size(1) >= self.keep_size)
+    def forward(self, input: torch.Tensor):
+        assert (input.size(1) >= self.keep_size)
         rand_index = torch.randperm(input.size(1))[:self.keep_size]
-        return input[:,rand_index]
+        return input[:, rand_index]

@@ -7,6 +7,7 @@ from deepspeed.accelerator import get_accelerator
 import torch.nn as nn
 import torch.nn.functional as F
 
+
 class Net(nn.Module):
     def __init__(self):
         super(Net, self).__init__()
@@ -32,7 +33,6 @@ class Net(nn.Module):
                     noisy_gate_policy="RSample"))
         self.moe_layer_list = nn.ModuleList(self.moe_layer_list)
         self.fc4 = nn.Linear(84, 10)
-
 
     def forward(self, x):
         x = self.pool(F.relu(self.conv1(x)))

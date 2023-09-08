@@ -1,7 +1,9 @@
 import torch.nn as nn
 import torch
-from tutel import moe 
+from tutel import moe
 import torch.nn.functional as F
+
+
 class Net(nn.Module):
     def __init__(self):
         super(Net, self).__init__()
@@ -11,15 +13,16 @@ class Net(nn.Module):
         self.fc1 = nn.Linear(16 * 5 * 5, 120)
         self.fc2 = nn.Linear(120, 84)
         self.moe = moe.moe_layer(
-            gate_type={'type': 'top','k':2},
+            gate_type={'type': 'top', 'k': 2},
             model_dim=84,
             experts={
                 'count_per_node': 2,
                 'type': 'ffn', 'hidden_size_per_expert': 2048, 'activation_fn': lambda x: torch.nn.functional.relu(x)
             },
-            scan_expert_func = lambda name, param: setattr(param, 'skip_allreduce', True),            
+            scan_expert_func=lambda name, param: setattr(
+                param, 'skip_allreduce', True),
         )
-            # create moe layers based on the number of experts
+        # create moe layers based on the number of experts
         self.fc3 = nn.Linear(84, 10)
 
     def forward(self, x):
