@@ -59,7 +59,7 @@ def get_transform(args):
 
 
 def get_dataset(args):
-    root = "data"
+    root = "../../data"
     if args.dataset == "c10":
         args.in_c = 3
         args.num_classes = 10
@@ -108,7 +108,7 @@ def get_dataset(args):
 def get_experiment_name(args):
     experiment_name = f"{args.model_name}_{args.dataset}"
     if args.model_name == "shuffle_vit":
-        experiment_name += f"_{args.shuffle_num}_{args.shuffle_channel}"
+        experiment_name += f"_shuffleLayer{args.shuffle_num}_channelNum{args.shuffle_channel}"
     if args.autoaugment:
         experiment_name += "_aa"
     if args.label_smoothing:

@@ -105,7 +105,8 @@ if __name__ == "__main__":
     )
     model_path = f"weights/{experiment_name}/"
 
-    # 监视测试准确率，注意这里性能指标名字要与self.log中保持一致
+    # Monitor test accuracy
+    # Notify that accuracy benchmark should be consistent with self.log
     ckpt_callback_test_acc = ModelCheckpoint(
         monitor='val_acc', dirpath=model_path,
         filename='epoch{epoch:02d}-val_acc{Val_accuracy:.2f}',

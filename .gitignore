@@ -160,10 +160,10 @@ cython_debug/
 #.idea/
 
 # data
-/data
+**/data
 
 # logs
-/logs
+**/logs
 
 # weights
-/weights
+**/weights
