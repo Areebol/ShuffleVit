@@ -115,10 +115,10 @@ class ShuffleTransformerEncoder(nn.Module):
         return out
 
 
-class MoETransformerEncoder(nn.Module):
+class TutelMoETransformerEncoder(nn.Module):
     def __init__(self, feats: int, mlp_hidden: int, head: int = 8, dropout: float = 0., args=None, num_experts: int = 2,
                  ep_world_size: int = 1, top_k: int = 1, min_capacity: int = 0, noisy_gate_policy: str = None):
-        super(MoETransformerEncoder, self).__init__()
+        super(TutelMoETransformerEncoder, self).__init__()
         self.la1 = nn.LayerNorm(feats)
         self.msa = MultiHeadSelfAttention(feats, head=head, dropout=dropout)
         self.la2 = nn.LayerNorm(feats)
@@ -130,15 +130,6 @@ class MoETransformerEncoder(nn.Module):
             nn.GELU(),
             nn.Dropout(dropout),
         )
-        # self.MoE = deepspeed.moe.layer.MoE(
-        #         hidden_size=feats,
-        #         expert=self.mlp,
-        #         num_experts=num_experts,
-        #         ep_size=ep_world_size,
-        #         use_residual=True,
-        #         k=top_k,
-        #         min_capacity=min_capacity,
-        #         noisy_gate_policy=noisy_gate_policy)
         self.MoE = moe.moe_layer(
             gate_type={'type': 'top', 'k': top_k},
             model_dim=feats,
@@ -154,6 +145,32 @@ class MoETransformerEncoder(nn.Module):
         out = self.la2(self.msa(self.la1(x)) + x)
         out = self.MoE(out)
         return out
+    
+# TODO 
+# Replace tutel to dp 
+class DpMoETransformerEncoder(nn.Module):
+    def __init__(self, feats: int, mlp_hidden: int, head: int = 8, dropout: float = 0., args=None, num_experts: int = 2,
+                 ep_world_size: int = 1, top_k: int = 1, min_capacity: int = 0, noisy_gate_policy: str = None):
+        super(TutelMoETransformerEncoder, self).__init__()
+        self.la1 = nn.LayerNorm(feats)
+        self.msa = MultiHeadSelfAttention(feats, head=head, dropout=dropout)
+        self.la2 = nn.LayerNorm(feats)
+        self.mlp = nn.Sequential(
+            nn.Linear(feats, mlp_hidden),
+            nn.GELU(),
+            nn.Dropout(dropout),
+            nn.Linear(mlp_hidden, feats),
+            nn.GELU(),
+            nn.Dropout(dropout),
+        )
+        # TODO 
+        # Replace tutel moe by dp moe
+        # ...
+
+    def forward(self, x):
+        out = self.la2(self.msa(self.la1(x)) + x)
+        out = self.MoE(out)
+        return out  
 
 
 if __name__ == "__main__":

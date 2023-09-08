@@ -5,8 +5,9 @@ Author: Areebol
 Date: 2023-07-19 20:42:54
 '''
 
-
+# Return model 
 def get_model(args):
+    # Set Vit model
     if args.model_name == 'vit':
         from model.vit import ViT
         net = ViT(
@@ -21,6 +22,7 @@ def get_model(args):
             head=args.head,
             is_cls_token=args.is_cls_token
         )
+    # Set shuffle Vit model
     elif args.model_name == 'shuffle_vit':
         from model.vit_shuffle import ShuffleViT
         net = ShuffleViT(
@@ -37,14 +39,13 @@ def get_model(args):
             shuffle_num=args.shuffle_num,
             shuffle_channel=args.shuffle_channel,
         )
+    # Set resNet model
     elif args.model_name == 'resNet':
         from model.resnet import ResNet, ResidualBlock
         net = ResNet(
             ResidualBlock,
             [2, 2, 2])
-    elif args.model_name == 'moe':
-        from model.dp_moe import Net
-        net = Net()
+    # Set moe Vit model based on tutel
     elif args.model_name == 'tutel_vit_moe':
         from model.tutel_vit_moe import MoEViT
         net = MoEViT(
@@ -64,7 +65,13 @@ def get_model(args):
             min_capacity=args.min_capacity,
             noisy_gate_policy=args.noisy_gate_policy
         )
-    # elif args.model_name == 'vit_moe':
+    # TODO Test moe model 
+    elif args.model_name == 'moe':
+        from model.dp_moe import Net
+        net = Net()
+    # TODO Set moe Vit model based on deepspeed
+    # elif args.model_name == 'dp_vit_moe':
+    # Raise exception
     else:
         raise NotImplementedError(
             f"{args.model_name} is not implemented yet...")

@@ -1,17 +1,9 @@
 '''
-Descripttion: 
+Descripttion: NN training framework
 version: 1.0
 Author: Areebol
 Date: 2023-07-19 20:35:06
 '''
-'''
-Descripttion: 
-version: 1.0
-Author: Areebol
-Date: 2023-07-19 20:35:06
-'''
-
-# Import config
 
 # Get dataset
 import torchvision

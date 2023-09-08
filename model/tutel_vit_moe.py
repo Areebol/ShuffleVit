@@ -8,7 +8,7 @@ import torch
 import torch.nn as nn
 import torchsummary
 
-from model.layers import TransformerEncoder, MoETransformerEncoder
+from model.layers import TransformerEncoder, TutelMoETransformerEncoder
 
 
 class MoEViT(nn.Module):
@@ -34,7 +34,7 @@ class MoEViT(nn.Module):
                 hidden, mlp_hidden=mlp_hidden, dropout=dropout, head=head))
         for n_e in num_experts:
             if (n_e > 0):
-                enc_list.append(MoETransformerEncoder(hidden, mlp_hidden=mlp_hidden, dropout=dropout, head=head,
+                enc_list.append(TutelMoETransformerEncoder(hidden, mlp_hidden=mlp_hidden, dropout=dropout, head=head,
                                                       num_experts=n_e, ep_world_size=ep_world_size, top_k=top_k,
                                                       min_capacity=min_capacity, noisy_gate_policy=noisy_gate_policy))
             else:
