@@ -42,10 +42,10 @@ def get_model(args):
             ResidualBlock,
             [2,2,2])
     elif args.model_name == 'moe':
-        from model.moe import Net
+        from model.dp_moe import Net
         net = Net()
-    elif args.model_name == 'vit_moe':
-        from model.dp_vit_moe import MoEViT
+    elif args.model_name == 'tutel_vit_moe':
+        from model.tutel_vit_moe import MoEViT
         net = MoEViT(            
             args.in_c, 
             args.num_classes, 

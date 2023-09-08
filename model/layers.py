@@ -3,6 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torchsummary
 import deepspeed
+from tutel import moe 
 
 
 class TransformerEncoder(nn.Module):
@@ -123,19 +124,28 @@ class MoETransformerEncoder(nn.Module):
             nn.GELU(),
             nn.Dropout(dropout),
         )
-        self.MoE = deepspeed.moe.layer.MoE(
-                hidden_size=feats,
-                expert=self.mlp,
-                num_experts=num_experts,
-                ep_size=ep_world_size,
-                use_residual=True,
-                k=top_k,
-                min_capacity=min_capacity,
-                noisy_gate_policy=noisy_gate_policy)                        
+        # self.MoE = deepspeed.moe.layer.MoE(
+        #         hidden_size=feats,
+        #         expert=self.mlp,
+        #         num_experts=num_experts,
+        #         ep_size=ep_world_size,
+        #         use_residual=True,
+        #         k=top_k,
+        #         min_capacity=min_capacity,
+        #         noisy_gate_policy=noisy_gate_policy)  
+        self.MoE = moe.moe_layer(
+            gate_type={'type': 'top','k':top_k},
+            model_dim=feats,
+            experts={
+                'count_per_node': num_experts,
+                'type': 'ffn', 'hidden_size_per_expert': mlp_hidden, 'activation_fn': lambda x: torch.nn.functional.gelu(x)
+            },
+            scan_expert_func = lambda name, param: setattr(param, 'skip_allreduce', True),            
+        )                
                 
             
     def forward(self, x):
-        out = self.msa(self.la1(x)) + x
+        out = self.la2(self.msa(self.la1(x)) + x)
         out = self.MoE(out)
         return out
 

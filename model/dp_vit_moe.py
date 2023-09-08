@@ -29,9 +29,13 @@ class MoEViT(nn.Module):
         for _ in range(num_layers-len(num_experts)):
             enc_list.append(TransformerEncoder(hidden,mlp_hidden=mlp_hidden, dropout=dropout, head=head))
         for n_e in num_experts:
-            enc_list.append(MoETransformerEncoder(hidden,mlp_hidden=mlp_hidden, dropout=dropout, head=head,
+            if(n_e > 1):
+                enc_list.append(MoETransformerEncoder(hidden,mlp_hidden=mlp_hidden, dropout=dropout, head=head,
                                                   num_experts=n_e,ep_world_size=ep_world_size,top_k=top_k, 
                                                   min_capacity=min_capacity, noisy_gate_policy=noisy_gate_policy))
+            else:
+                enc_list.append(TransformerEncoder(hidden,mlp_hidden=mlp_hidden, dropout=dropout, head=head))
+
         self.enc = nn.Sequential(*enc_list)
         self.fc = nn.Sequential(
             nn.LayerNorm(hidden),
@@ -65,9 +69,7 @@ class MoEViT(nn.Module):
 if __name__ == "__main__":
     b,c,h,w = 4, 3, 32, 32
     x = torch.randn(b, c, h, w)
+    
     net = MoEViT(in_c=c, num_classes= 10, img_size=h, patch=16, dropout=0.1, num_layers=7, hidden=384, head=12, mlp_hidden=384, is_cls_token=False)
-    # out = net(x)
-    # out.mean().backward()
     torchsummary.summary(net, (c,h,w))
-    # print(out.shape)
     
