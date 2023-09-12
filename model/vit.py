@@ -12,27 +12,39 @@ from model.layers import TransformerEncoder
 
 
 class ViT(nn.Module):
-    def __init__(self, in_c: int = 3, num_classes: int = 10, img_size: int = 32, patch: int = 8, dropout: float = 0., num_layers: int = 7, hidden: int = 384, mlp_hidden: int = 384*4, head: int = 8, is_cls_token: bool = True):
+    def __init__(self, args
+                # in_c: int = 3,
+                # num_classes: int = 10, 
+                # img_size: int = 32, 
+                # patch: int = 8, 
+                # dropout: float = 0., 
+                # num_layers: int = 7,
+                # hidden: int = 384, 
+                # mlp_hidden: int = 384*4, 
+                # head: int = 8, 
+                # is_cls_token: bool = True
+    ):
         super(ViT, self).__init__()
         # hidden=384
-
-        self.patch = patch  # number of patches in one row(or col)
-        self.is_cls_token = is_cls_token
-        self.patch_size = img_size//self.patch
-        f = (img_size//self.patch)**2*3  # 48 # patch vec length
+        hidden = args.hidden
+        # Refactor arguments
+        self.patch = args.patch  # number of patches in one row(or col)
+        self.is_cls_token = args.is_cls_token
+        self.patch_size = args.img_size//self.patch
+        f = (args.img_size//self.patch)**2*3  # 48 # patch vec length
         num_tokens = (self.patch**2) + \
             1 if self.is_cls_token else (self.patch**2)
 
-        self.emb = nn.Linear(f, hidden)  # (b, n, f)
+        self.emb = nn.Linear(f, args.hidden)  # (b, n, f)
         self.cls_token = nn.Parameter(torch.randn(
-            1, 1, hidden)) if is_cls_token else None
-        self.pos_emb = nn.Parameter(torch.randn(1, num_tokens, hidden))
+            1, 1, hidden)) if args.is_cls_token else None
+        self.pos_emb = nn.Parameter(torch.randn(1, num_tokens, args.hidden))
         enc_list = [TransformerEncoder(
-            hidden, mlp_hidden=mlp_hidden, dropout=dropout, head=head) for _ in range(num_layers)]
+            args.hidden, mlp_hidden=args.mlp_hidden, dropout=args.dropout, head=args.head) for _ in range(args.num_layers)]
         self.enc = nn.Sequential(*enc_list)
         self.fc = nn.Sequential(
-            nn.LayerNorm(hidden),
-            nn.Linear(hidden, num_classes)  # for cls_token
+            nn.LayerNorm(args.hidden),
+            nn.Linear(args.hidden, args.num_classes)  # for cls_token
         )
 
     def forward(self, x):

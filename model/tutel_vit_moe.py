@@ -12,11 +12,24 @@ from model.layers import TransformerEncoder, TutelMoETransformerEncoder
 
 
 class MoEViT(nn.Module):
-    def __init__(self, in_c: int = 3, num_classes: int = 10, img_size: int = 32, patch: int = 8, dropout: float = 0., num_layers: int = 7, hidden: int = 384, mlp_hidden: int = 384*4, head: int = 8,
-                 is_cls_token: bool = True, num_experts: int = [1], ep_world_size: int = 1, top_k: int = 1, min_capacity: int = 0, noisy_gate_policy: str = None):
+    def __init__(self, args):
         super(MoEViT, self).__init__()
         # hidden=384
-
+        in_c = args.in_c
+        num_classes=args.num_classes
+        img_size=args.img_size
+        patch=args.patch
+        dropout=args.dropout
+        num_layers=args.num_layers
+        hidden=args.hidden
+        mlp_hidden=args.mlp_hidden
+        head=args.head
+        is_cls_token=args.is_cls_token
+        num_experts=args.num_experts
+        ep_world_size=args.ep_world_size
+        top_k=args.top_k
+        min_capacity=args.min_capacity
+        noisy_gate_policy=args.noisy_gate_policy
         self.patch = patch  # number of patches in one row(or col)
         self.is_cls_token = is_cls_token
         self.patch_size = img_size//self.patch
@@ -34,6 +47,7 @@ class MoEViT(nn.Module):
                 hidden, mlp_hidden=mlp_hidden, dropout=dropout, head=head))
         for n_e in num_experts:
             if (n_e > 0):
+                # TODO change the args of the moe transformer encoder
                 enc_list.append(TutelMoETransformerEncoder(hidden, mlp_hidden=mlp_hidden, dropout=dropout, head=head,
                                                       num_experts=n_e, ep_world_size=ep_world_size, top_k=top_k,
                                                       min_capacity=min_capacity, noisy_gate_policy=noisy_gate_policy))

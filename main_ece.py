@@ -28,6 +28,7 @@ train_dl, test_dl = utils.get_dataloader(args=args)
 class Net(pl.LightningModule):
     def __init__(self, hparams, test_dl):
         super(Net, self).__init__()
+        self.automatic_optimization = False
         self.hparams.update(vars(hparams))
         # Get model by hparams's model name
         self.model = model.get_model(hparams)
@@ -52,10 +53,8 @@ class Net(pl.LightningModule):
             self.optimizer, multiplier=1., total_epoch=self.hparams.warmup_epoch, after_scheduler=self.base_scheduler)
         return [self.optimizer], [self.scheduler]
 
-    def training_step(self, batch, batch_idx):
-        # Get a batch of training data
+    def compute_loss(self,batch):
         img, label = batch
-        # Make data go through model
         if self.hparams.cutmix or self.hparams.mixup:
             if self.hparams.cutmix:
                 img, label, rand_label, lambda_ = self.cutmix((img, label))
@@ -66,14 +65,24 @@ class Net(pl.LightningModule):
                     img, label, rand_label, lambda_ = img, label, torch.zeros_like(
                         label), 1.
             out = self.model(img)
-            loss = self.criterion(out, label)*lambda_ + \
-                self.criterion(out, rand_label)*(1.-lambda_)
         else:
             out = self(img)
-            loss = self.criterion(out, label)
-
+        loss = self.criterion(out, label)
+        
         # Get acc
         acc = torch.eq(out.argmax(-1), label).float().mean()
+        return loss, acc
+
+    def training_step(self, batch, batch_idx):
+        opt = self.optimizers()
+        loss,acc = self.compute_loss(batch)
+        opt.zero_grad()
+        self.manual_backward(loss)
+        nn.utils.clip_grad_norm_(self.model.parameters(), 1.0)
+        opt.step()
+        # Get a batch of training data
+        # # Make data go through model
+
         # Log acc, loss
         self.log("loss", loss)
         self.log("acc", acc)

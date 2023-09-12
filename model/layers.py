@@ -145,13 +145,29 @@ class TutelMoETransformerEncoder(nn.Module):
         out = self.la2(self.msa(self.la1(x)) + x)
         out = self.MoE(out)
         return out
-    
-# TODO 
-# Replace tutel to dp 
+
+# TODO Replace tutel to dp
+
+
 class DpMoETransformerEncoder(nn.Module):
-    def __init__(self, feats: int, mlp_hidden: int, head: int = 8, dropout: float = 0., args=None, num_experts: int = 2,
-                 ep_world_size: int = 1, top_k: int = 1, min_capacity: int = 0, noisy_gate_policy: str = None):
-        super(TutelMoETransformerEncoder, self).__init__()
+    def __init__(self, args):
+        super(DpMoETransformerEncoder, self).__init__()
+        # Set model config
+        in_c = args.in_c
+        num_classes=args.num_classes
+        img_size=args.img_size
+        patch=args.patch
+        dropout=args.dropout
+        num_layers=args.num_layers
+        feats=args.hidden
+        mlp_hidden=args.mlp_hidden
+        head=args.head
+        is_cls_token=args.is_cls_token
+        num_experts=args.num_experts
+        ep_world_size=args.ep_world_size
+        top_k=args.top_k
+        min_capacity=args.min_capacity
+        noisy_gate_policy=args.noisy_gate_policy
         self.la1 = nn.LayerNorm(feats)
         self.msa = MultiHeadSelfAttention(feats, head=head, dropout=dropout)
         self.la2 = nn.LayerNorm(feats)
@@ -163,14 +179,21 @@ class DpMoETransformerEncoder(nn.Module):
             nn.GELU(),
             nn.Dropout(dropout),
         )
-        # TODO 
-        # Replace tutel moe by dp moe
-        # ...
+        # TODO Replace tutel moe by dp moe
+        self.moe_layer_list = []
+        self.moe = deepspeed.moe.layer.MoE(
+            hidden_size=mlp_hidden,
+            expert=self.mlp,
+            num_experts=8,
+            ep_size=ep_world_size,
+            k=top_k,
+            min_capacity=min_capacity,
+            noisy_gate_policy=noisy_gate_policy)
 
     def forward(self, x):
         out = self.la2(self.msa(self.la1(x)) + x)
-        out = self.MoE(out)
-        return out  
+        out, _, _ = self.moe(out)
+        return out
 
 
 if __name__ == "__main__":
